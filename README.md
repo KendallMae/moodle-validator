@@ -1,40 +1,111 @@
-## Part 1: Local Deployment Setup
+# Moodle Validator
 
-This project uses Docker Compose to orchestrate a local Moodle application instance connected to a MariaDB database.
+Automated UI and backend test suite for a local Moodle instance. Uses Playwright for browser automation and pytest for test execution, verifying both frontend interactions and backend data integrity.
 
-### Prerequisites
-* Docker and Docker Compose installed on your machine.
+## Prerequisites
 
-### Installation Steps
-1. Clone this repository and navigate to the root directory.
-2. Spin up the environment by running:
-   ```bash
-   docker compose up -d
-   ```
-3. The first launch takes **3–5 minutes** while Moodle installs and configures the database. Subsequent starts are much faster thanks to persistent volumes.
-4. Monitor progress with:
-   ```bash
-   docker compose logs -f moodle
-   ```
-   You'll know it's ready when you see `moodle 08:...:.. INFO  ==> ** Moodle setup finished! **` in the logs.
-5. You can also check container health status:
-   ```bash
-   docker compose ps
-   ```
-   Wait until the `moodle` service shows `healthy` in the STATUS column.
-6. Access the local Moodle instance at: **http://localhost:8080**
+- Docker and Docker Compose
+- Python 3.11+
+- Node.js (required by Playwright for browser binaries)
 
-### Default Admin Credentials
-* **Username:** `user`
-* **Password:** `AdminPass123!`
+## Quick Start
 
-### Stopping and Cleaning Up
+### 1. Start Moodle
 
-* **Stop the environment (preserves data):**
-  ```bash
-  docker compose down
-  ```
-* **Wipe the environment completely (resets database to a clean slate):**
-  ```bash
-  docker compose down -v
-  ```
+```bash
+docker compose up -d
+```
+
+The first launch takes **3–5 minutes** while Moodle installs and configures the database. Monitor progress:
+
+```bash
+docker compose logs -f moodle
+```
+
+You'll know it's ready when you see `** Moodle setup finished! **` in the logs. Access the site at **[http://localhost:8080](http://localhost:8080)**.
+
+### 2. Install Python Dependencies
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+playwright install chromium
+```
+
+### 3. Run the Test Suite
+
+Run UI tests first (they create data that backend tests verify):
+
+```bash
+pytest tests/ui -v
+pytest tests/backend -v
+```
+
+Or run everything together:
+
+```bash
+pytest tests/ui -v && pytest tests/backend -v
+```
+
+## Default Admin Credentials
+
+- **Username:** `user`
+- **Password:** `AdminPass123!`
+
+## Test Overview
+
+### UI Tests (`tests/ui/`)
+
+
+| Test                    | What it does                                             |
+| ----------------------- | -------------------------------------------------------- |
+| `test_login.py`         | Logs into admin dashboard, verifies Dashboard loads      |
+| `test_create_course.py` | Creates a new course, verifies it appears                |
+| `test_register_user.py` | Registers a new user, verifies they show up in user list |
+
+
+### Backend Tests (`tests/backend/`)
+
+
+| Test                    | What it does                                            |
+| ----------------------- | ------------------------------------------------------- |
+| `test_auth_token.py`    | Obtains a REST API token, validates its format          |
+| `test_verify_course.py` | Verifies course exists via REST API and direct DB query |
+| `test_verify_user.py`   | Verifies user exists via REST API and direct DB query   |
+
+
+## Stopping and Cleaning Up
+
+**Stop the environment (preserves data):**
+
+```bash
+docker compose down
+```
+
+**Wipe everything and start fresh:**
+
+```bash
+docker compose down -v
+```
+
+## Project Structure
+
+```
+moodle-validator/
+├── docker-compose.yml      # Moodle + MariaDB containers
+├── conftest.py             # Shared pytest fixtures
+├── pytest.ini              # Pytest configuration
+├── requirements.txt        # Python dependencies
+├── tests/
+│   ├── ui/                 # Playwright browser tests
+│   │   ├── test_login.py
+│   │   ├── test_create_course.py
+│   │   └── test_register_user.py
+│   └── backend/            # API and database tests
+│       ├── test_auth_token.py
+│       ├── test_verify_course.py
+│       └── test_verify_user.py
+└── README.md
+```
+
