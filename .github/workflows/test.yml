@@ -1,0 +1,55 @@
+name: Moodle Test Suite
+
+on:
+  push:
+    branches: [main, feature/moodle-5.1-lts]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start Moodle stack
+        run: docker compose up -d
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          playwright install chromium --with-deps
+
+      - name: Wait for Moodle to be ready
+        run: |
+          echo "Waiting for Moodle (up to 8 minutes)..."
+          timeout 480 bash -c '
+            until curl -s -o /dev/null -w "%{http_code}" http://localhost:8080 | grep -q "200\|303"; do
+              sleep 10
+              echo "Still waiting..."
+            done
+          '
+          echo "Moodle is ready!"
+
+      - name: Run UI tests
+        run: pytest tests/ui -v
+
+      - name: Run backend tests
+        run: pytest tests/backend -v
+
+      - name: Upload test artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            test-results/
+            *.png
