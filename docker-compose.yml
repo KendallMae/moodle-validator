@@ -9,17 +9,27 @@ services:
       - MYSQL_DATABASE=moodle
       - MYSQL_USER=moodleuser
       - MYSQL_PASSWORD=moodlepass
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mariadb-admin", "ping", "-h", "localhost", "-u", "root", "-prootpass"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   moodle:
-    image: bitnamilegacy/moodle:latest
+    image: pasechnik/moodle_lts_images:5.1.0-lts
+    platform: linux/amd64
     ports:
-      - "8080:8080"
-    environment:
-      - MOODLE_DATABASE_HOST=db
-      - MOODLE_DATABASE_PORT_NUMBER=3306
-      - MOODLE_DATABASE_NAME=moodle
-      - MOODLE_DATABASE_USER=moodleuser
-      - MOODLE_DATABASE_PASSWORD=moodlepass
-      - MOODLE_PASSWORD=AdminPass123!
+      - "8080:80"
+    volumes:
+      - moodledata:/var/www/moodledata
+      - ./scripts/entrypoint.sh:/entrypoint.sh:ro
+    entrypoint: ["/entrypoint.sh"]
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+
+volumes:
+  db_data:
+  moodledata:

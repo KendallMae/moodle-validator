@@ -2,13 +2,15 @@
 
 Automated UI and backend test suite for a local Moodle instance. Uses Playwright for browser automation and pytest for test execution, verifying both frontend interactions and backend data integrity.
 
+> **Branch:** `feature/moodle-5.1-lts` — Uses [Moodle 5.1 LTS](https://moodle.org) on PHP 8.2 with an automated CLI install. See `main` branch for the Bitnami legacy version (Moodle 5.0.1).
+
 ## Architecture
 
 ```mermaid
 graph LR
     subgraph docker [Docker Compose]
-        Moodle["Moodle :8080"]
-        MariaDB["MariaDB :3306"]
+        Moodle["Moodle 5.1 LTS :8080"]
+        MariaDB["MariaDB 10.11 :3306"]
         Moodle --> MariaDB
     end
 
@@ -36,13 +38,13 @@ graph LR
 docker compose up -d
 ```
 
-The first launch takes **3–5 minutes** while Moodle installs and configures the database. Monitor progress:
+The first launch takes **5–8 minutes** while the CLI installer sets up the database. Monitor progress:
 
 ```bash
 docker compose logs -f moodle
 ```
 
-You'll know it's ready when you see `** Moodle setup finished! **` in the logs. Access the site at **[http://localhost:8080](http://localhost:8080)**.
+You'll know it's ready when you see `Moodle install complete.` followed by `Starting Apache...`. Access the site at **[http://localhost:8080](http://localhost:8080)**.
 
 **Default Admin Credentials:**
 - **Username:** `user`
@@ -98,6 +100,22 @@ pytest tests/ui -v && pytest tests/backend -v
 | `test_verify_course.py` | Verifies course exists via REST API and direct DB query |
 | `test_verify_user.py` | Verifies user exists via REST API and direct DB query |
 
+## Stack Details
+
+| Component | Version | Notes |
+| --- | --- | --- |
+| Moodle | 5.1.0 LTS | Latest long-term support release |
+| PHP | 8.2 | Via `pasechnik/moodle_lts_images` |
+| MariaDB | 10.11 | With utf8mb4 collation |
+| Apache | 2.4 | Bundled in the Moodle image |
+
+The `scripts/entrypoint.sh` handles automated setup:
+1. Waits for MariaDB to be ready
+2. Generates `config.php` on every startup
+3. Runs the CLI database installer on first boot
+4. Fixes file permissions for Apache
+5. Starts Apache in the foreground
+
 ## Stopping and Cleaning Up
 
 **Stop the environment (preserves data):**
@@ -116,7 +134,9 @@ docker compose down -v
 
 ```
 moodle-validator/
-├── docker-compose.yml      # Moodle + MariaDB containers
+├── docker-compose.yml      # Moodle 5.1 + MariaDB containers
+├── scripts/
+│   └── entrypoint.sh       # Automated Moodle CLI install
 ├── conftest.py             # Shared pytest fixtures
 ├── pytest.ini              # Pytest configuration
 ├── requirements.txt        # Python dependencies

@@ -71,14 +71,14 @@ def enable_web_services(moodle_ready):
     """
     subprocess.run(
         ["docker", "compose", "exec", "-T", "moodle",
-         "php", "/opt/bitnami/moodle/admin/cli/cfg.php",
+         "php", "/var/www/moodle/admin/cli/cfg.php",
          "--name=enablewebservices", "--set=1"],
         capture_output=True,
         timeout=30,
     )
     subprocess.run(
         ["docker", "compose", "exec", "-T", "moodle",
-         "php", "/opt/bitnami/moodle/admin/cli/cfg.php",
+         "php", "/var/www/moodle/admin/cli/cfg.php",
          "--name=webserviceprotocols", "--set=rest"],
         capture_output=True,
         timeout=30,
@@ -88,7 +88,7 @@ def enable_web_services(moodle_ready):
         ["docker", "compose", "exec", "-T", "moodle",
          "php", "-r",
          "define('CLI_SCRIPT', true); "
-         "require('/opt/bitnami/moodle/config.php'); "
+         "require('/var/www/moodle/config.php'); "
          "$DB->set_field('external_services', 'enabled', 1, "
          "['shortname' => 'moodle_mobile_app']);"],
         capture_output=True,
