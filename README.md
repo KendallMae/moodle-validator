@@ -11,8 +11,18 @@ This project uses Docker Compose to orchestrate a local Moodle application insta
    ```bash
    docker compose up -d
    ```
-3. Allow 2–3 minutes for the database tables to initialize on the first launch.
-4. Access the local Moodle instance at: **http://localhost:8080**
+3. The first launch takes **3–5 minutes** while Moodle installs and configures the database. Subsequent starts are much faster thanks to persistent volumes.
+4. Monitor progress with:
+   ```bash
+   docker compose logs -f moodle
+   ```
+   You'll know it's ready when you see `moodle 08:...:.. INFO  ==> ** Moodle setup finished! **` in the logs.
+5. You can also check container health status:
+   ```bash
+   docker compose ps
+   ```
+   Wait until the `moodle` service shows `healthy` in the STATUS column.
+6. Access the local Moodle instance at: **http://localhost:8080**
 
 ### Default Admin Credentials
 * **Username:** `user`
