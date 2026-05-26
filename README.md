@@ -2,6 +2,26 @@
 
 Automated UI and backend test suite for a local Moodle instance. Uses Playwright for browser automation and pytest for test execution, verifying both frontend interactions and backend data integrity.
 
+## Architecture
+
+```mermaid
+graph LR
+    subgraph docker [Docker Compose]
+        Moodle["Moodle :8080"]
+        MariaDB["MariaDB :3306"]
+        Moodle --> MariaDB
+    end
+
+    subgraph tests [Test Suite - pytest]
+        UI["Playwright UI Tests"]
+        Backend["Backend API/DB Tests"]
+    end
+
+    UI -->|"Browser automation"| Moodle
+    Backend -->|"REST API"| Moodle
+    Backend -->|"Direct SQL"| MariaDB
+```
+
 ## Prerequisites
 
 - Docker and Docker Compose
@@ -23,6 +43,8 @@ docker compose logs -f moodle
 ```
 
 You'll know it's ready when you see `** Moodle setup finished! **` in the logs. Access the site at **[http://localhost:8080](http://localhost:8080)**.
+
+![Moodle Dashboard](docs/moodle-dashboard.png)
 
 ### 2. Install Python Dependencies
 
@@ -48,6 +70,10 @@ Or run everything together:
 pytest tests/ui -v && pytest tests/backend -v
 ```
 
+### Example Output
+
+![Test Results](docs/test-results.png)
+
 ## Default Admin Credentials
 
 - **Username:** `user`
@@ -55,25 +81,21 @@ pytest tests/ui -v && pytest tests/backend -v
 
 ## Test Overview
 
-### UI Tests (`tests/ui/`)
+### Part 2: UI Tests (`tests/ui/`)
 
-
-| Test                    | What it does                                             |
-| ----------------------- | -------------------------------------------------------- |
-| `test_login.py`         | Logs into admin dashboard, verifies Dashboard loads      |
-| `test_create_course.py` | Creates a new course, verifies it appears                |
+| Test | What it does |
+| --- | --- |
+| `test_login.py` | Logs into admin dashboard, verifies Dashboard loads |
+| `test_create_course.py` | Creates a new course, verifies it appears |
 | `test_register_user.py` | Registers a new user, verifies they show up in user list |
 
+### Part 3: Backend Tests (`tests/backend/`)
 
-### Backend Tests (`tests/backend/`)
-
-
-| Test                    | What it does                                            |
-| ----------------------- | ------------------------------------------------------- |
-| `test_auth_token.py`    | Obtains a REST API token, validates its format          |
+| Test | What it does |
+| --- | --- |
+| `test_auth_token.py` | Obtains a REST API token, validates its format |
 | `test_verify_course.py` | Verifies course exists via REST API and direct DB query |
-| `test_verify_user.py`   | Verifies user exists via REST API and direct DB query   |
-
+| `test_verify_user.py` | Verifies user exists via REST API and direct DB query |
 
 ## Stopping and Cleaning Up
 
@@ -97,6 +119,9 @@ moodle-validator/
 ├── conftest.py             # Shared pytest fixtures
 ├── pytest.ini              # Pytest configuration
 ├── requirements.txt        # Python dependencies
+├── docs/                   # Screenshots and assets
+│   ├── moodle-dashboard.png
+│   └── test-results.png
 ├── tests/
 │   ├── ui/                 # Playwright browser tests
 │   │   ├── test_login.py
@@ -108,4 +133,3 @@ moodle-validator/
 │       └── test_verify_user.py
 └── README.md
 ```
-
