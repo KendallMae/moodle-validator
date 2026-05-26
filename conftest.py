@@ -1,4 +1,5 @@
 import time
+import subprocess
 import pytest
 import requests
 import mysql.connector
@@ -31,26 +32,26 @@ def admin_credentials():
 
 @pytest.fixture(scope="session", autouse=True)
 def moodle_ready(base_url):
-    """Block until Moodle's login page responds with HTTP 200.
+    """Block until Moodle responds to HTTP requests.
 
     Polls every 5 seconds for up to 5 minutes. This handles the slow
     first-boot initialization of the Bitnami Moodle container.
     """
-    login_url = f"{base_url}/login/index.php"
+    url = f"{base_url}/"
     timeout = 300
     interval = 5
     deadline = time.time() + timeout
 
     while time.time() < deadline:
         try:
-            resp = requests.get(login_url, timeout=10)
-            if resp.status_code == 200:
+            resp = requests.get(url, timeout=10, allow_redirects=True)
+            if resp.status_code in (200, 303):
                 return
-        except requests.ConnectionError:
+        except (requests.ConnectionError, requests.Timeout):
             pass
         time.sleep(interval)
 
-    pytest.fail(f"Moodle did not become ready at {login_url} within {timeout}s")
+    pytest.fail(f"Moodle did not become ready at {url} within {timeout}s")
 
 
 @pytest.fixture(scope="session")
@@ -62,22 +63,37 @@ def db_connection():
 
 
 @pytest.fixture(scope="session", autouse=True)
-def enable_web_services(db_connection):
-    """Enable Moodle web services and the REST protocol via direct DB update.
+def enable_web_services(moodle_ready):
+    """Enable Moodle web services and the REST protocol via Moodle's CLI.
 
-    This is required before any REST API calls will work. It runs once
-    per test session and is equivalent to toggling these settings in
-    Site Administration > Web services.
+    Uses the cfg.php CLI tool which properly handles config changes and
+    cache invalidation without corrupting Moodle's internal state.
     """
-    cursor = db_connection.cursor()
-    cursor.execute(
-        "UPDATE mdl_config SET value='1' WHERE name='enablewebservices'"
+    subprocess.run(
+        ["docker", "compose", "exec", "-T", "moodle",
+         "php", "/opt/bitnami/moodle/admin/cli/cfg.php",
+         "--name=enablewebservices", "--set=1"],
+        capture_output=True,
+        timeout=30,
     )
-    cursor.execute(
-        "UPDATE mdl_config SET value='rest' WHERE name='webserviceprotocols'"
+    subprocess.run(
+        ["docker", "compose", "exec", "-T", "moodle",
+         "php", "/opt/bitnami/moodle/admin/cli/cfg.php",
+         "--name=webserviceprotocols", "--set=rest"],
+        capture_output=True,
+        timeout=30,
     )
-    db_connection.commit()
-    cursor.close()
+    # Enable the moodle_mobile_app external service via Moodle's DB API
+    subprocess.run(
+        ["docker", "compose", "exec", "-T", "moodle",
+         "php", "-r",
+         "define('CLI_SCRIPT', true); "
+         "require('/opt/bitnami/moodle/config.php'); "
+         "$DB->set_field('external_services', 'enabled', 1, "
+         "['shortname' => 'moodle_mobile_app']);"],
+        capture_output=True,
+        timeout=30,
+    )
 
 
 @pytest.fixture(scope="session")
