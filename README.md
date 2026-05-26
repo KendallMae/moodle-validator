@@ -44,6 +44,12 @@ docker compose logs -f moodle
 
 You'll know it's ready when you see `** Moodle setup finished! **` in the logs. Access the site at **[http://localhost:8080](http://localhost:8080)**.
 
+**Default Admin Credentials:**
+- **Username:** `user`
+- **Password:** `AdminPass123!`
+
+*Once Moodle is ready, log in with the credentials above. You should see the Dashboard:*
+
 ![Moodle Dashboard](docs/moodle-dashboard.png)
 
 ### 2. Install Python Dependencies
@@ -74,14 +80,9 @@ pytest tests/ui -v && pytest tests/backend -v
 
 ![Test Results](docs/test-results.png)
 
-## Default Admin Credentials
-
-- **Username:** `user`
-- **Password:** `AdminPass123!`
-
 ## Test Overview
 
-### Part 2: UI Tests (`tests/ui/`)
+### UI Tests (`tests/ui/`)
 
 | Test | What it does |
 | --- | --- |
@@ -89,7 +90,7 @@ pytest tests/ui -v && pytest tests/backend -v
 | `test_create_course.py` | Creates a new course, verifies it appears |
 | `test_register_user.py` | Registers a new user, verifies they show up in user list |
 
-### Part 3: Backend Tests (`tests/backend/`)
+### Backend Tests (`tests/backend/`)
 
 | Test | What it does |
 | --- | --- |
