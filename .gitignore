@@ -1,0 +1,15 @@
+# Python virtual environment
+venv/
+.venv/
+env/
+
+# Pytest & Playwright artifacts
+.pytest_cache/
+__pycache__/
+*.pyc
+.snapshots/
+test-results/
+
+# Operating system files
+.DS_Store
+
