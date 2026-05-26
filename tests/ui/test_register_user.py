@@ -1,4 +1,3 @@
-import re
 import time
 
 import pytest
@@ -12,17 +11,10 @@ TEST_EMAIL = f"{TEST_USERNAME}@example.com"
 
 
 @pytest.mark.ui
-def test_register_user(page, base_url, admin_credentials):
+def test_register_user(logged_in_page, base_url):
     """Create a new user as admin and verify they appear in the user list."""
 
-    # Log in as admin
-    page.goto(f"{base_url}/login/index.php", wait_until="networkidle")
-    page.locator("#username").click()
-    page.locator("#username").type(admin_credentials["username"])
-    page.locator("#password").click()
-    page.locator("#password").type(admin_credentials["password"])
-    page.locator("#loginbtn").click()
-    page.wait_for_load_state("networkidle")
+    page = logged_in_page
 
     # Navigate to the "Add a new user" page
     page.goto(f"{base_url}/user/editadvanced.php?id=-1", wait_until="networkidle")
@@ -31,14 +23,11 @@ def test_register_user(page, base_url, admin_credentials):
     page.locator("#id_username").click()
     page.locator("#id_username").fill(TEST_USERNAME)
 
-    # Reveal the password field by toggling the "Generate password" checkbox
-    # and removing the d-none class that Moodle uses to hide it
+    # Reveal the password field by toggling the checkbox and forcing visibility
     page.locator("#id_createpassword").click()
     page.wait_for_timeout(500)
     page.locator("#id_createpassword").click()
     page.wait_for_timeout(500)
-
-    # Force the field visible via JS in case the checkbox toggle didn't work
     page.evaluate("document.getElementById('id_newpassword').classList.remove('d-none')")
     page.locator("#id_newpassword").fill(TEST_PASSWORD)
 

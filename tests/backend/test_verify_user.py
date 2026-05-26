@@ -1,32 +1,20 @@
 import pytest
 import requests
-import mysql.connector
-
-
-DB_CONFIG = {
-    "host": "localhost",
-    "port": 3306,
-    "database": "moodle",
-    "user": "moodleuser",
-    "password": "moodlepass",
-}
 
 
 @pytest.mark.backend
-def test_verify_user_via_api(base_url, api_token):
+def test_verify_user_via_api(base_url, api_token, db_connection):
     """Verify a test user exists by querying the Moodle REST API directly."""
 
-    # First get all user IDs > 2 from DB (skip guest and admin)
-    conn = mysql.connector.connect(**DB_CONFIG)
-    cursor = conn.cursor(dictionary=True)
+    # Look up the user ID from the database first
+    cursor = db_connection.cursor(dictionary=True)
     cursor.execute("SELECT id FROM mdl_user WHERE lastname = 'Validator' LIMIT 1")
     row = cursor.fetchone()
     cursor.close()
-    conn.close()
 
     assert row is not None, "No test user found in DB -- run UI register test first"
 
-    # Use core_user_get_users_by_field (available in mobile service)
+    # Use core_user_get_users_by_field (available in the mobile service)
     resp = requests.post(
         f"{base_url}/webservice/rest/server.php",
         data={
@@ -47,20 +35,17 @@ def test_verify_user_via_api(base_url, api_token):
 
 
 @pytest.mark.backend
-def test_verify_user_via_db():
+def test_verify_user_via_db(db_connection):
     """Verify a test user exists by querying the database directly."""
 
-    conn = mysql.connector.connect(**DB_CONFIG)
-    cursor = conn.cursor(dictionary=True)
-
+    # Query mdl_user for the test user created by the UI test
+    cursor = db_connection.cursor(dictionary=True)
     cursor.execute(
         "SELECT id, username, firstname, lastname, email "
         "FROM mdl_user WHERE lastname = 'Validator'"
     )
     users = cursor.fetchall()
-
     cursor.close()
-    conn.close()
 
     assert len(users) > 0, "No user with lastname 'Validator' found in mdl_user"
     assert users[0]["firstname"] == "Test"

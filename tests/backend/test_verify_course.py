@@ -1,21 +1,12 @@
 import pytest
 import requests
-import mysql.connector
-
-
-DB_CONFIG = {
-    "host": "localhost",
-    "port": 3306,
-    "database": "moodle",
-    "user": "moodleuser",
-    "password": "moodlepass",
-}
 
 
 @pytest.mark.backend
 def test_verify_course_via_api(base_url, api_token):
     """Verify a course exists by querying the Moodle REST API directly."""
 
+    # Call the core_course_get_courses web service function
     resp = requests.post(
         f"{base_url}/webservice/rest/server.php",
         data={
@@ -35,19 +26,16 @@ def test_verify_course_via_api(base_url, api_token):
 
 
 @pytest.mark.backend
-def test_verify_course_via_db():
+def test_verify_course_via_db(db_connection):
     """Verify a course exists by querying the database directly."""
 
-    conn = mysql.connector.connect(**DB_CONFIG)
-    cursor = conn.cursor(dictionary=True)
-
+    # Query the mdl_course table, skipping the default site course (id=1)
+    cursor = db_connection.cursor(dictionary=True)
     cursor.execute(
         "SELECT id, fullname, shortname FROM mdl_course WHERE id != 1"
     )
     courses = cursor.fetchall()
-
     cursor.close()
-    conn.close()
 
     assert len(courses) > 0, "No courses found in mdl_course table"
     assert courses[0]["fullname"] is not None

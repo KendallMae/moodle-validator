@@ -114,3 +114,16 @@ def api_token(base_url, admin_credentials):
 
     assert "token" in data, f"Failed to get token: {data}"
     return data["token"]
+
+
+@pytest.fixture
+def logged_in_page(page, base_url, admin_credentials):
+    """Playwright page that is already logged in as admin."""
+    page.goto(f"{base_url}/login/index.php", wait_until="networkidle")
+    page.locator("#username").click()
+    page.locator("#username").type(admin_credentials["username"])
+    page.locator("#password").click()
+    page.locator("#password").type(admin_credentials["password"])
+    page.locator("#loginbtn").click()
+    page.wait_for_load_state("networkidle")
+    return page
