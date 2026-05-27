@@ -2,6 +2,12 @@
 
 Automated UI and backend test suite for a local Moodle instance. Uses Playwright for browser automation and pytest for test execution, verifying both frontend interactions and backend data integrity.
 
+## Video Demo
+
+Walkthrough of a clean setup, running the test suite, and a quick code tour:
+
+[![Watch the demo on YouTube](docs/demo-thumbnail.png)](https://youtu.be/V5hMCFz4Dvs)
+
 ## Architecture
 
 ```mermaid
@@ -138,6 +144,7 @@ moodle-validator/
 ├── pytest.ini              # Pytest configuration
 ├── requirements.txt        # Python dependencies
 ├── docs/                   # Screenshots and assets
+│   ├── demo-thumbnail.png
 │   ├── moodle-dashboard.png
 │   └── test-results.png
 ├── tests/
