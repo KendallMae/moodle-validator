@@ -56,9 +56,26 @@ You'll know it's ready when you see `Moodle install complete.` followed by `Star
 
 ### 2. Install Python Dependencies
 
+**macOS/Linux**
+
 ```bash
 python3 -m venv venv
 source venv/bin/activate
+pip install -r requirements.txt
+playwright install chromium
+```
+
+**Windows**
+
+```powershell
+python -m venv venv
+
+# Git Bash
+source venv/Scripts/activate
+
+# PowerShell
+.\venv\Scripts\Activate.ps1
+
 pip install -r requirements.txt
 playwright install chromium
 ```
